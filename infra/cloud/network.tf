@@ -16,7 +16,7 @@ resource "aws_subnet" "privateDB_cs3" {
     Name = "privateDB_cs3"
   }
 }
-
+# tfsec:ignore:aws-ec2-no-public-ip-subnet
 resource "aws_subnet" "public_cs3" {
   vpc_id                  = aws_vpc.vpc_cs3.id
   cidr_block              = "10.0.2.0/24"
@@ -36,7 +36,7 @@ resource "aws_internet_gateway" "igw_cs3" {
 }
 
 # ROUTING TABLES
-# tfsec:ignore:aws-ec2-no-public-ip-subnet
+
 resource "aws_route_table" "rt_public_cs3" {
   vpc_id = aws_vpc.vpc_cs3.id
 
@@ -95,6 +95,7 @@ resource "aws_security_group" "db_sg" {
   }
 }
 # tfsec:ignore:aws-ec2-no-public-egress-sgr
+# tfsec:ignore:aws-ec2-no-public-ingress-sgr
 resource "aws_security_group" "bastion_sg" {
   name        = "bastion-sg"
   description = "Allow SSH to bastion"

@@ -21,7 +21,11 @@ resource "aws_instance" "ec2_bastion" {
   subnet_id              = aws_subnet.public_cs3.id
   private_ip             = "10.0.2.10"
   key_name               = "ansible_keypair"
-
+  root_block_device {
+    encrypted   = true
+    volume_size = 10
+    volume_type = "gp3"
+  }
   metadata_options {
     http_tokens = "required"
   }
