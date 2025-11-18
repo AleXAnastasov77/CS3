@@ -8,10 +8,10 @@ resource "aws_db_subnet_group" "sqldb_sg" {
 }
 
 resource "aws_db_instance" "sqldb_cs3" {
-  allocated_storage         = 20
-  max_allocated_storage     = 25
-  db_subnet_group_name      = aws_db_subnet_group.sqldb_sg.name
-  
+  allocated_storage     = 20
+  max_allocated_storage = 25
+  db_subnet_group_name  = aws_db_subnet_group.sqldb_sg.name
+
   engine                    = "sqlserver-ee"
   engine_version            = "16.0.4215.2"
   instance_class            = "db.t3.micro"
@@ -23,9 +23,9 @@ resource "aws_db_instance" "sqldb_cs3" {
   vpc_security_group_ids    = [aws_security_group.db_sg.id]
   lifecycle {
     ignore_changes = [
-      password,                # Don’t try to reset the password every run
-      backup_retention_period, 
-      maintenance_window,      
+      password, # Don’t try to reset the password every run
+      backup_retention_period,
+      maintenance_window,
       final_snapshot_identifier
     ]
   }
