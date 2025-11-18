@@ -21,6 +21,7 @@ resource "aws_db_instance" "sqldb_cs3" {
   final_snapshot_identifier = "HRapp-MSSQL-final-${formatdate("YYYYMMDDhhmmss", timestamp())}"
   storage_type              = "gp2"
   vpc_security_group_ids    = [aws_security_group.db_sg.id]
+  storage_encrypted = true
   lifecycle {
     ignore_changes = [
       password, # Don’t try to reset the password every run
