@@ -52,31 +52,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Prepare Lambda source zips
-        run: |
-          cd infra
-          mkdir -p lambdas_build
-          echo "Packaging Lambda functions with dependencies..."
-
-          for fn in check_misp create_case block_ip notify send_to_elastic; do
-            echo "Packaging $fn..."
-
-            mkdir -p lambdas_build/$fn
-            pip install requests pymisp -t lambdas_build/$fn/
-            cp lambdas/$fn.py lambdas_build/$fn/
-
-            # Zip everything and always return to infra/
-            (cd lambdas_build/$fn && zip -r ../../lambdas/$fn.zip .)
-          done
-
-          echo "✅ All Lambda packages built successfully."
-
-
-      - name: Upload Lambda Zips
-        uses: actions/upload-artifact@v4
-        with:
-          name: lambda-zips
-          path: infra/lambdas/*.zip
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -111,11 +86,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Download Lambda Zips
-        uses: actions/download-artifact@v4
-        with:
-          name: lambda-zips
-          path: infra/lambdas
 
       - name: Download Plan Artifact
         uses: actions/download-artifact@v4
