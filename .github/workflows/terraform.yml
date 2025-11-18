@@ -1,0 +1,147 @@
+name: Terraform Pipeline
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "infra/cloud/**"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  lint-and-scan:
+    name: Lint, Validate, and Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Format Check
+        working-directory: infra
+        run: terraform fmt -check -recursive
+
+      - name: Install TFLint
+        run: |
+          curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+
+      - name: Run TFLint
+        working-directory: infra
+        run: tflint --init && tflint
+
+      - name: Run tfsec (Security Scan)
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          working_directory: infra
+          additional_args: --minimum-severity HIGH
+
+      - name: Run Gitleaks (Secrets Scan)
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          args: detect --source=. --no-banner --redact
+
+  terraform-plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    needs: lint-and-scan
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Prepare Lambda source zips
+        run: |
+          cd infra
+          mkdir -p lambdas_build
+          echo "Packaging Lambda functions with dependencies..."
+
+          for fn in check_misp create_case block_ip notify send_to_elastic; do
+            echo "Packaging $fn..."
+
+            mkdir -p lambdas_build/$fn
+            pip install requests pymisp -t lambdas_build/$fn/
+            cp lambdas/$fn.py lambdas_build/$fn/
+
+            # Zip everything and always return to infra/
+            (cd lambdas_build/$fn && zip -r ../../lambdas/$fn.zip .)
+          done
+
+          echo "✅ All Lambda packages built successfully."
+
+
+      - name: Upload Lambda Zips
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda-zips
+          path: infra/lambdas/*.zip
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::057827529833:role/GitHubActionsPipeline
+          aws-region: eu-central-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: infra
+        run: terraform init
+
+      - name: Terraform Plan
+        working-directory: infra
+        env:
+          TF_VAR_elastic_password: ${{ secrets.TF_VAR_elastic_password }}
+        run: terraform plan -out=tfplan
+        
+      - name: Upload Plan Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: infra/tfplan
+
+  terraform-apply:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+    needs: terraform-plan
+    environment: dev
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Download Lambda Zips
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-zips
+          path: infra/lambdas
+
+      - name: Download Plan Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan
+          path: infra
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::057827529833:role/GitHubActionsPipeline
+          aws-region: eu-central-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: infra
+        run: terraform init
+
+      - name: Terraform Apply
+        working-directory: infra
+        env:
+          TF_VAR_elastic_password: ${{ secrets.TF_VAR_elastic_password }}
+        run: terraform apply -auto-approve tfplan 
