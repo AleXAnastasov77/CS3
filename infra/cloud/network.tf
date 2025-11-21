@@ -7,12 +7,20 @@ resource "aws_vpc" "vpc_cs3" {
   }
 }
 # SUBNETS
-resource "aws_subnet" "privateDB_cs3" {
+resource "aws_subnet" "privateDB_cs3_A" {
+  vpc_id     = aws_vpc.vpc_cs3.id
+  cidr_block = "10.0.0.0/24"
+  availability_zone = data.aws_availability_zones.available.names[0]
+  tags = {
+    Name = "privateDB_cs3_A"
+  }
+}
+resource "aws_subnet" "privateDB_cs3_B" {
   vpc_id     = aws_vpc.vpc_cs3.id
   cidr_block = "10.0.1.0/24"
-
+  availability_zone = data.aws_availability_zones.available.names[1]
   tags = {
-    Name = "privateDB_cs3"
+    Name = "privateDB_cs3_B"
   }
 }
 # tfsec:ignore:aws-ec2-no-public-ip-subnet
@@ -63,7 +71,11 @@ resource "aws_route_table_association" "a" {
 }
 
 resource "aws_route_table_association" "b" {
-  subnet_id      = aws_subnet.privateDB_cs3.id
+  subnet_id      = aws_subnet.privateDB_cs3_A.id
+  route_table_id = aws_route_table.rt_private_cs3.id
+}
+resource "aws_route_table_association" "c" {
+  subnet_id      = aws_subnet.privateDB_cs3_B.id
   route_table_id = aws_route_table.rt_private_cs3.id
 }
 

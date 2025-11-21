@@ -1,6 +1,6 @@
 resource "aws_db_subnet_group" "sqldb_sg" {
   name       = "main"
-  subnet_ids = [aws_subnet.privateDB_cs3.id]
+  subnet_ids = [aws_subnet.privateDB_cs3_A.id, aws_subnet.privateDB_cs3_B.id]
 
   tags = {
     Name = "sqldb_sg"
