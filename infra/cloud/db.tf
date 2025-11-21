@@ -11,7 +11,7 @@ resource "aws_db_instance" "sqldb_cs3" {
   allocated_storage     = 20
   max_allocated_storage = 25
   db_subnet_group_name  = aws_db_subnet_group.sqldb_sg.name
-
+  license_model = "license-included"
   engine                    = "sqlserver-ee"
   engine_version            = "15.00"
   instance_class            = "db.t3.micro"
