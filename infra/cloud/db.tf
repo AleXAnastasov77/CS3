@@ -13,7 +13,7 @@ resource "aws_db_instance" "sqldb_cs3" {
   db_subnet_group_name  = aws_db_subnet_group.sqldb_sg.name
 
   engine                    = "sqlserver-ee"
-  engine_version            = "16.0.4215.2"
+  engine_version            = "15.00"
   instance_class            = "db.t3.micro"
   username                  = var.DB_USERNAME
   password                  = var.DB_PASSWORD
