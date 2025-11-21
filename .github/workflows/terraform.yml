@@ -62,11 +62,11 @@ jobs:
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
-        working-directory: infra
+        working-directory: infra/cloud
         run: terraform init
 
       - name: Terraform Plan
-        working-directory: infra
+        working-directory: infra/cloud
         env:
           TF_VAR_elastic_password: ${{ secrets.TF_VAR_elastic_password }}
         run: terraform plan -out=tfplan
@@ -103,11 +103,11 @@ jobs:
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
-        working-directory: infra
+        working-directory: infra/cloud
         run: terraform init
 
       - name: Terraform Apply
-        working-directory: infra
+        working-directory: infra/cloud
         env:
           TF_VAR_elastic_password: ${{ secrets.TF_VAR_elastic_password }}
         run: terraform apply -auto-approve tfplan 
