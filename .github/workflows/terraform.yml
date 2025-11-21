@@ -29,13 +29,13 @@ jobs:
           curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
 
       - name: Run TFLint
-        working-directory: infra
+        working-directory: infra/cloud
         run: tflint --init && tflint
 
       - name: Run tfsec (Security Scan)
         uses: aquasecurity/tfsec-action@v1.0.3
         with:
-          working_directory: infra
+          working_directory: infra/cloud
           additional_args: --minimum-severity HIGH
 
       - name: Run Gitleaks (Secrets Scan)
@@ -77,14 +77,16 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: tfplan
-          path: infra/tfplan
+          path: infra/cloud/tfplan
 
   terraform-apply:
     name: Terraform Apply
     runs-on: ubuntu-latest
     needs: terraform-plan
     environment: dev
-
+    env:
+      TF_VAR_DB_PASSWORD: ${{ secrets.TF_VAR_DB_PASSWORD }}
+      TF_VAR_DB_USERNAME: ${{ secrets.TF_VAR_DB_USERNAME }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -93,7 +95,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: tfplan
-          path: infra
+          path: infra/cloud
 
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
