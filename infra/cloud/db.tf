@@ -8,10 +8,10 @@ resource "aws_db_subnet_group" "sqldb_sg" {
 }
 
 resource "aws_db_instance" "sqldb_cs3" {
-  allocated_storage     = 20
-  max_allocated_storage = 25
-  db_subnet_group_name  = aws_db_subnet_group.sqldb_sg.name
-  license_model = "license-included"
+  allocated_storage         = 20
+  max_allocated_storage     = 25
+  db_subnet_group_name      = aws_db_subnet_group.sqldb_sg.name
+  license_model             = "license-included"
   engine                    = "sqlserver-ee"
   engine_version            = "15.00"
   instance_class            = "db.t3.micro"
@@ -21,7 +21,7 @@ resource "aws_db_instance" "sqldb_cs3" {
   final_snapshot_identifier = "HRapp-MSSQL-final-${formatdate("YYYYMMDDhhmmss", timestamp())}"
   storage_type              = "gp2"
   vpc_security_group_ids    = [aws_security_group.db_sg.id]
-  storage_encrypted = true
+  storage_encrypted         = true
   lifecycle {
     ignore_changes = [
       password, # Don’t try to reset the password every run

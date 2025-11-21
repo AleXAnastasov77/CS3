@@ -8,16 +8,16 @@ resource "aws_vpc" "vpc_cs3" {
 }
 # SUBNETS
 resource "aws_subnet" "privateDB_cs3_A" {
-  vpc_id     = aws_vpc.vpc_cs3.id
-  cidr_block = "10.0.0.0/24"
+  vpc_id            = aws_vpc.vpc_cs3.id
+  cidr_block        = "10.0.0.0/24"
   availability_zone = data.aws_availability_zones.available.names[0]
   tags = {
     Name = "privateDB_cs3_A"
   }
 }
 resource "aws_subnet" "privateDB_cs3_B" {
-  vpc_id     = aws_vpc.vpc_cs3.id
-  cidr_block = "10.0.1.0/24"
+  vpc_id            = aws_vpc.vpc_cs3.id
+  cidr_block        = "10.0.1.0/24"
   availability_zone = data.aws_availability_zones.available.names[1]
   tags = {
     Name = "privateDB_cs3_B"
