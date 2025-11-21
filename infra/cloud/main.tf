@@ -4,11 +4,11 @@ resource "aws_servicecatalogappregistry_application" "cs3_soar" {
   description = "Case Study 3 - Employee on-boarding and off-boarding"
 }
 
-provider "aws" {
-  default_tags {
-    tags = merge(
-      var.tags,
-      aws_servicecatalogappregistry_application.cs3_soar.application_tag
-    )
-  }
-}
+# provider "aws" {
+#   default_tags {
+#     tags = merge(
+#       var.tags,
+#       aws_servicecatalogappregistry_application.cs3_soar.application_tag
+#     )
+#   }
+# }
