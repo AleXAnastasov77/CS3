@@ -47,7 +47,9 @@ jobs:
     name: Terraform Plan
     runs-on: ubuntu-latest
     needs: lint-and-scan
-
+    env:
+      TF_VAR_DB_PASSWORD: ${{ secrets.TF_VAR_DB_PASSWORD }}
+      TF_VAR_DB_USERNAME: ${{ secrets.TF_VAR_DB_USERNAME }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
