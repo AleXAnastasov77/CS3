@@ -20,7 +20,7 @@ resource "aws_instance" "ec2_bastion" {
   vpc_security_group_ids = [aws_security_group.bastion_sg.id]
   subnet_id              = aws_subnet.public_cs3.id
   private_ip             = "10.0.2.10"
-  key_name               = "ansible_keypair"
+  key_name               = "alex_keypair"
   
   root_block_device {
     encrypted   = true
