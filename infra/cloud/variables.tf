@@ -4,15 +4,15 @@ variable "region" {
   default     = "eu-central-1"
 }
 
-variable "tags" {
-  description = "Tags to apply to all resources"
-  type        = map(string)
-  default = {
-    environment = "Development"
-    project     = "Case Study 3"
-    owner       = "Aleks Anastasov"
-  }
-}
+# variable "tags" {
+#   description = "Tags to apply to all resources"
+#   type        = map(string)
+#   default = {
+#     environment = "Development"
+#     project     = "Case Study 3"
+#     owner       = "Aleks Anastasov"
+#   }
+# }
 
 variable "DB_USERNAME" {
   description = "The username of the SQL Database"
