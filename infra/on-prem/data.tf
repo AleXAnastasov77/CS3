@@ -20,13 +20,17 @@ data "vsphere_network" "workstations" {
   name          = "1416_i547391_PVlanB"
   datacenter_id = data.vsphere_datacenter.dc.id
 }
+data "vsphere_network" "webservers" {
+  name          = "1417_i547391_PVlanC"
+  datacenter_id = data.vsphere_datacenter.dc.id
+}
 data "vsphere_network" "pfsense" {
   name          = "0154_Internet-Static-192.168.154.0_24"
   datacenter_id = data.vsphere_datacenter.dc.id
 }
 
 data "vsphere_virtual_machine" "ubuntu_template" {
-  name          = "Templ_Ubuntu-Linux_Server_24.04.3"
+  name          = "Templ_Ubuntu-Linux_Desktop_22.04.5"
   datacenter_id = data.vsphere_datacenter.dc.id
 }
 

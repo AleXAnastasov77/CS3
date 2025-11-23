@@ -19,6 +19,10 @@ resource "vsphere_virtual_machine" "router_pfsense" {
     network_id   = data.vsphere_network.workstations.id
     adapter_type = "vmxnet3"
   }
+  network_interface {
+    network_id   = data.vsphere_network.webservers.id
+    adapter_type = "vmxnet3"
+  }
 
   disk {
     label            = "Hard Disk 1"
