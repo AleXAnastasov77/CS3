@@ -8,6 +8,8 @@ resource "vsphere_virtual_machine" "worker_node" {
   memory                     = 12288
   guest_id                   = data.vsphere_virtual_machine.ubuntu_template.guest_id
   wait_for_guest_net_timeout = 0
+  memory_hot_add_enabled = true
+  vvtd_enabled = true
   network_interface {
     network_id   = data.vsphere_network.webservers.id
     adapter_type = "vmxnet3"
@@ -21,5 +23,10 @@ resource "vsphere_virtual_machine" "worker_node" {
 
   clone {
     template_uuid = data.vsphere_virtual_machine.ubuntu_template.id
+  }
+  lifecycle {
+    ignore_changes = [
+      network_interface
+    ]
   }
 }

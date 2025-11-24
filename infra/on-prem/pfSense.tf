@@ -33,4 +33,9 @@ resource "vsphere_virtual_machine" "router_pfsense" {
   clone {
     template_uuid = data.vsphere_virtual_machine.pfsense_template.id
   }
+  lifecycle {
+    ignore_changes = [
+      network_interface
+    ]
+  }
 }

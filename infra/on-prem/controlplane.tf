@@ -22,4 +22,9 @@ resource "vsphere_virtual_machine" "control_plane" {
   clone {
     template_uuid = data.vsphere_virtual_machine.ubuntu_template.id
   }
+  lifecycle {
+    ignore_changes = [
+      network_interface
+    ]
+  }
 }
