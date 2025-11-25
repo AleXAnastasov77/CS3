@@ -1,8 +1,8 @@
 resource "vsphere_virtual_machine" "control_plane" {
-  name                       = "SERVERS_CONTROL_PLANE"
-  folder                     = "/_Courses/MA-NCA1/i547391"
-  resource_pool_id           = data.vsphere_resource_pool.pool.id
-  datastore_id               = data.vsphere_datastore.ds.id
+  name             = "SERVERS_CONTROL_PLANE"
+  folder           = "/_Courses/MA-NCA1/i547391"
+  resource_pool_id = data.vsphere_resource_pool.pool.id
+  datastore_id     = data.vsphere_datastore.ds.id
   #firmware                   = "efi"
   num_cpus                   = 2
   memory                     = 12288
