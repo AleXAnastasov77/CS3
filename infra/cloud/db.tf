@@ -10,7 +10,7 @@ resource "aws_db_subnet_group" "sqldb_sg" {
 resource "aws_db_instance" "mysqldb_cs3" {
   allocated_storage         = 20
   max_allocated_storage     = 25
-
+  identifier = "HR-CS3"
   engine                    = "mysql"
   engine_version            = "8.0" 
   instance_class            = "db.t3.micro"

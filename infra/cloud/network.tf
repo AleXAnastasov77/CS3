@@ -87,9 +87,9 @@ resource "aws_security_group" "db_sg" {
   vpc_id      = aws_vpc.vpc_cs3.id
 
   ingress {
-    description = "Allow SQL"
-    from_port   = 1433
-    to_port     = 1433
+    description = "Allow MySQL"
+    from_port   = 3306
+    to_port     = 3306
     protocol    = "tcp"
     cidr_blocks = ["10.0.2.0/24", "10.0.100.0/24"]
   }
