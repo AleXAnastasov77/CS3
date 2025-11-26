@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Employees{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-semibold text-gray-700">Employees</h1>
+
+    <a href="{{ url_for('new_employee') }}"
+       class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+        + Add Employee
+    </a>
+</div>
+
+<div class="bg-white shadow-md rounded">
+    <table class="min-w-full table-auto" id="employees-table">
+        <thead class="bg-gray-200 text-gray-700">
+            <tr>
+                <th class="px-4 py-2 text-left">Name</th>
+                <th class="px-4 py-2 text-left">Email</th>
+                <th class="px-4 py-2">Department</th>
+                <th class="px-4 py-2">AD Username</th>
+                <th class="px-4 py-2">VM</th>
+                <th class="px-4 py-2">Status</th>
+                <th class="px-4 py-2">Actions</th>
+            </tr>
+        </thead>
+        <tbody id="employees-body">
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Redirect immediately if no JWT -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    if (!localStorage.getItem("hr_jwt")) {
+        window.location.href = "/login";
+    }
+});
+</script>
+
+<script>
+async function loadEmployees() {
+    const token = getToken();
+    if (!token) {
+        window.location.href = "/login";
+        return;
+    }
+
+    const resp = await fetch(API_BASE + "/api/employees", {
+        headers: { "Authorization": "Bearer " + token }
+    });
+
+    if (resp.status === 401) {
+        setToken(null);
+        window.location.href = "/login";
+        return;
+    }
+
+    const data = await resp.json();
+    renderEmployees(data);
+}
+
+function renderEmployees(employees) {
+    const tbody = document.getElementById("employees-body");
+    tbody.innerHTML = "";
+
+    employees.forEach(e => {
+        const tr = document.createElement("tr");
+        tr.className = "border-b";
+
+        tr.innerHTML = `
+            <td class="px-4 py-2">${e.first_name} ${e.last_name}</td>
+            <td class="px-4 py-2">${e.email}</td>
+            <td class="px-4 py-2 text-center">${e.department_name}</td>
+            <td class="px-4 py-2 text-center">${e.ad_username}</td>
+            <td class="px-4 py-2 text-center">${e.vm_name || "-"}</td>
+            <td class="px-4 py-2 text-center">
+                ${e.status === "active"
+                    ? '<span class="text-green-600 font-semibold">Active</span>'
+                    : '<span class="text-gray-500">Deactivated</span>'}
+            </td>
+            <td class="px-4 py-2 text-center">
+                ${e.status === "active"
+                    ? '<button data-id="'+e.id+'" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 deactivate-btn">Deactivate</button>'
+                    : '<span class="text-gray-400">—</span>'}
+            </td>
+        `;
+
+        tbody.appendChild(tr);
+    });
+
+    document.querySelectorAll(".deactivate-btn").forEach(btn => {
+        btn.addEventListener("click", () => deactivateEmployee(btn.dataset.id));
+    });
+}
+
+async function deactivateEmployee(id) {
+    const token = getToken();
+    if (!token) {
+        window.location.href = "/login";
+        return;
+    }
+
+    if (!confirm("Deactivate this employee?")) return;
+
+    const resp = await fetch(API_BASE + `/api/employees/${id}/deactivate`, {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + token }
+    });
+
+    const data = await resp.json();
+
+    if (!resp.ok) {
+        showFlash(data.error || "Failed to deactivate employee", "error");
+        return;
+    }
+
+    showFlash("Employee deactivated");
+    loadEmployees();
+}
+
+document.addEventListener("DOMContentLoaded", loadEmployees);
+</script>
+{% endblock %}

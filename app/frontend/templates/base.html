@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}HR Portal{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-white shadow p-4 flex justify-between items-center">
+        <div class="text-xl font-semibold text-blue-600">Innovatech HR Portal</div>
+        <div class="flex gap-6">
+            <a href="{{ url_for('index') }}" class="text-gray-600 hover:text-blue-600">Employees</a>
+            <a href="{{ url_for('login') }}" class="text-gray-600 hover:text-blue-600" id="nav-login-link">Login</a>
+            <button id="nav-logout-btn" class="hidden text-red-500 hover:text-red-700">Logout</button>
+        </div>
+    </nav>
+
+    <div class="max-w-5xl mx-auto mt-10">
+        <div id="flash-container"></div>
+        {% block content %}{% endblock %}
+    </div>
+
+    <script>
+        const API_BASE = "{{ backend_api_url }}";
+
+        function getToken() {
+            return localStorage.getItem("hr_jwt");
+        }
+
+        function setToken(token) {
+            if (token) {
+                localStorage.setItem("hr_jwt", token);
+            } else {
+                localStorage.removeItem("hr_jwt");
+            }
+            updateNavAuthState();
+        }
+
+        function updateNavAuthState() {
+            const token = getToken();
+            const loginLink = document.getElementById("nav-login-link");
+            const logoutBtn = document.getElementById("nav-logout-btn");
+
+            if (!loginLink || !logoutBtn) return;
+
+            if (token) {
+                loginLink.classList.add("hidden");
+                logoutBtn.classList.remove("hidden");
+            } else {
+                loginLink.classList.remove("hidden");
+                logoutBtn.classList.add("hidden");
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            updateNavAuthState();
+
+            const logoutBtn = document.getElementById("nav-logout-btn");
+            if (logoutBtn) {
+                logoutBtn.addEventListener("click", () => {
+                    setToken(null);
+                    window.location.href = "{{ url_for('login') }}";
+                });
+            }
+        });
+
+        function showFlash(message, type="info") {
+            const container = document.getElementById("flash-container");
+            if (!container) return;
+            container.innerHTML = `
+              <div class="mb-4 p-3 rounded ${
+                type === "error" ? "bg-red-100 text-red-800 border-l-4 border-red-600"
+                                  : "bg-blue-100 text-blue-800 border-l-4 border-blue-600"
+              }">
+                ${message}
+              </div>`;
+            setTimeout(() => { container.innerHTML = ""; }, 4000);
+        }
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

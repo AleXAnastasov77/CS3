@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}New Employee{% endblock %}
+
+{% block content %}
+<h1 class="text-3xl font-semibold text-gray-700 mb-6">Add Employee</h1>
+
+<form id="employee-form" class="bg-white shadow-md rounded px-8 pt-6 pb-8 max-w-xl">
+
+    <label class="block mb-4">
+        <span class="text-gray-700">First Name</span>
+        <input name="first_name" required
+               class="w-full mt-1 p-2 border rounded focus:ring-2 focus:ring-blue-400">
+    </label>
+
+    <label class="block mb-4">
+        <span class="text-gray-700">Last Name</span>
+        <input name="last_name" required
+               class="w-full mt-1 p-2 border rounded focus:ring-2 focus:ring-blue-400">
+    </label>
+
+    <label class="block mb-4">
+        <span class="text-gray-700">Email</span>
+        <input type="email" name="email" required
+               class="w-full mt-1 p-2 border rounded focus:ring-2 focus:ring-blue-400">
+    </label>
+
+    <label class="block mb-6">
+        <span class="text-gray-700">Department</span>
+        <select name="department_id" id="department-select" required
+                class="w-full mt-1 p-2 border rounded focus:ring-2 focus:ring-blue-400 bg-white">
+        </select>
+    </label>
+
+    <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+        Create Employee
+    </button>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<!-- Redirect immediately if no JWT -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    if (!localStorage.getItem("hr_jwt")) {
+        window.location.href = "/login";
+    }
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    // -----------------------------
+    // Load Departments
+    // -----------------------------
+    async function loadDepartments() {
+        const token = getToken();
+        if (!token) {
+            window.location.href = "/login";
+            return;
+        }
+
+        try {
+            const resp = await fetch(API_BASE + "/api/departments", {
+                headers: {
+                    "Authorization": "Bearer " + token
+                }
+            });
+
+            const data = await resp.json();
+
+            if (!resp.ok) {
+                showFlash(data.error || "Failed to load departments", "error");
+                return;
+            }
+
+            const select = document.getElementById("department-select");
+            data.forEach(dep => {
+                const opt = document.createElement("option");
+                opt.value = dep.id;
+                opt.textContent = dep.name;
+                select.appendChild(opt);
+            });
+
+        } catch (err) {
+            console.error(err);
+            showFlash("Could not contact backend", "error");
+        }
+    }
+
+    loadDepartments();
+
+
+    // -----------------------------
+    // Submit Employee Form
+    // -----------------------------
+    const empForm = document.getElementById("employee-form");
+
+    empForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const token = getToken();
+        if (!token) {
+            window.location.href = "/login";
+            return;
+        }
+
+        const formData = new FormData(empForm);
+        const payload = {
+            first_name: formData.get("first_name"),
+            last_name: formData.get("last_name"),
+            email: formData.get("email"),
+            department_id: parseInt(formData.get("department_id"))
+        };
+
+        try {
+            const resp = await fetch(API_BASE + "/api/employees", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + token
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await resp.json();
+
+            if (!resp.ok) {
+                // NEW improved error handling
+                showFlash(data.error || "Failed to create employee", "error");
+                return;
+            }
+
+            showFlash("Employee created successfully!", "success");
+
+            setTimeout(() => {
+                window.location.href = "/";
+            }, 800);
+
+        } catch (err) {
+            console.error(err);
+            showFlash("Could not reach backend", "error");
+        }
+    });
+
+});
+</script>
+
+{% endblock %}

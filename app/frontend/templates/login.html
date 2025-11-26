@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="flex justify-center mt-20">
+    <form id="login-form" class="bg-white shadow-md rounded px-8 pt-6 pb-8 w-96">
+        <h1 class="text-2xl font-semibold text-center mb-6 text-gray-700">HR Portal Login</h1>
+
+        <label class="block mb-4">
+            <span class="text-gray-700">Username</span>
+            <input name="username" required
+                   class="w-full mt-1 p-2 border rounded focus:ring-2 focus:ring-blue-400">
+        </label>
+
+        <label class="block mb-6">
+            <span class="text-gray-700">Password</span>
+            <input type="password" name="password" required
+                   class="w-full mt-1 p-2 border rounded focus:ring-2 focus:ring-blue-400">
+        </label>
+
+        <button class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
+            Login
+        </button>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    const loginForm = document.getElementById("login-form");
+
+    loginForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const formData = new FormData(loginForm);
+        const payload = {
+            username: formData.get("username"),
+            password: formData.get("password")
+        };
+
+        try {
+            const resp = await fetch(API_BASE + "/api/login", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(payload)
+            });
+
+            const data = await resp.json();
+
+            if (!resp.ok) {
+                showFlash(data.error || "Login failed", "error");
+                return;
+            }
+
+            setToken(data.access_token);
+
+            setTimeout(() => {
+                window.location.href = "/";
+            }, 50);
+
+        } catch (err) {
+            console.error(err);
+            showFlash("Error contacting backend", "error");
+        }
+    });
+
+});
+</script>
+{% endblock %}

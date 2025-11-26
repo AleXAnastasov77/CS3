@@ -1,0 +1,6 @@
+flask
+flask-cors
+pymysql
+werkzeug
+python-dotenv
+python-jose
