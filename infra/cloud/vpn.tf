@@ -6,7 +6,7 @@ data "aws_acm_certificate" "cert" {
 resource "aws_ec2_client_vpn_endpoint" "vpnendpoint_cs3" {
   description            = "VPN for monitoring access"
   server_certificate_arn = data.aws_acm_certificate.cert.arn
-  client_cidr_block      = "10.0.100.0/24"
+  client_cidr_block      = "10.100.0.0/16"
   dns_servers = ["10.0.0.2"]
   vpc_id = aws_vpc.vpc_cs3.id
   split_tunnel = true
