@@ -13,7 +13,7 @@ resource "aws_ec2_client_vpn_endpoint" "vpnendpoint_cs3" {
 
   authentication_options {
     type                       = "certificate-authentication"
-    root_certificate_chain_arn = "arn:aws:acm:eu-central-1:057827529833:certificate/529701a0-51dd-4b3f-b468-42396612fe61"
+    root_certificate_chain_arn = "arn:aws:acm:eu-central-1:057827529833:certificate/aaa66e36-7ce7-4697-aa3b-f76b643a0393"
   }
 
   connection_log_options {
