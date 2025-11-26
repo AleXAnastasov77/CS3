@@ -23,6 +23,11 @@
         <input type="email" name="email" required
                class="w-full mt-1 p-2 border rounded focus:ring-2 focus:ring-blue-400">
     </label>
+    <label class="block mb-4">
+        <span class="text-gray-700">AD Password</span>
+        <input type="password" name="password" required
+            class="w-full mt-1 p-2 border rounded focus:ring-2 focus:ring-blue-400">
+    </label>
 
     <label class="block mb-6">
         <span class="text-gray-700">Department</span>
@@ -110,8 +115,10 @@ document.addEventListener("DOMContentLoaded", () => {
             first_name: formData.get("first_name"),
             last_name: formData.get("last_name"),
             email: formData.get("email"),
-            department_id: parseInt(formData.get("department_id"))
+            department_id: parseInt(formData.get("department_id")),
+            password: formData.get("password")
         };
+
 
         try {
             const resp = await fetch(API_BASE + "/api/employees", {
