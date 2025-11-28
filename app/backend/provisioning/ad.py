@@ -75,7 +75,7 @@ def create_ad_user(ad_username, first_name, last_name, email, password, ou_dn):
     # 2. SET PASSWORD (WinRM)
     # -----------------------
     ps_script = f'''
-    Set-ADAccountPassword -Identity "{ad_username}" -Reset -NewPassword (ConvertTo-SecureString "{password}" -AsPlainText -Force)
+    Set-ADAccountPassword -Identity "webserver@innovatech.internal" -Reset -NewPassword (ConvertTo-SecureString "{password}" -AsPlainText -Force)
     Enable-ADAccount -Identity "{ad_username}"
     '''
 
