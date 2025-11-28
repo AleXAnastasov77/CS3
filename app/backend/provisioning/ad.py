@@ -1,6 +1,6 @@
-from ldap3 import Server, Connection, ALL, MODIFY_REPLACE
+from ldap3 import Server, Connection, ALL, MODIFY_REPLACE, Tls
 from config import Config
-
+import ssl
 
 def _ad_base_dn():
     """Convert domain like innovatech.internal → DC=innovatech,DC=internal"""
@@ -25,14 +25,16 @@ def create_ad_user(ad_username, first_name, last_name, email, password, ou_dn):
 
     admin_user = _admin_upn()
     admin_pass = Config.AD_ADMIN_PASS
+    tls = Tls(validate=ssl.CERT_NONE)
 
-    server = Server(Config.AD_SERVER, get_info=ALL, use_ssl=False)
+    server = Server(Config.AD_SERVER, use_ssl=True, port=636, tls=tls, get_info=ALL, use_ssl=False)
     conn = Connection(
-        server,
-        user=admin_user,
-        password=admin_pass,
-        authentication="SIMPLE",
-        auto_bind=True,
+    server,
+    user=admin_user,
+    password=admin_pass,
+    authentication="SIMPLE",
+    auto_bind=True,
+    auto_escape=True
     )
 
     user_dn = f"CN={first_name} {last_name},{ou_dn}"

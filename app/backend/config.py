@@ -33,7 +33,7 @@ class Config:
 
     AD_SERVER = "192.168.0.10"
     AD_DOMAIN = "innovatech.internal"
-    AD_ADMIN_USER = "INNOVATECH\\webserver"
+    AD_ADMIN_USER = "webserver@innovatech.internal"
     AD_ADMIN_PASS = os.getenv("AD_ADMIN_PASS")
     AD_USER_OU = {
         "HR":        "OU=HR,OU=Users,OU=Netherlands,DC=innovatech,DC=internal",
