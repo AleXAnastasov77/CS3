@@ -24,7 +24,7 @@ def _winrm_session():
     """Create a WinRM session to the DC."""
     return winrm.Session(
         f'http://{Config.AD_SERVER}:5985/wsman',
-        auth=(Config.AD_ADMIN_USER, Config.AD_ADMIN_PASS)
+        auth=("INNOVATECH\\webserver", Config.AD_ADMIN_PASS)
     )
 
 
@@ -75,7 +75,7 @@ def create_ad_user(ad_username, first_name, last_name, email, password, ou_dn):
     # 2. SET PASSWORD (WinRM)
     # -----------------------
     ps_script = f'''
-    Set-ADAccountPassword -Identity "INNOVATECH\webserver" -Reset -NewPassword (ConvertTo-SecureString "{password}" -AsPlainText -Force)
+    Set-ADAccountPassword -Identity "{ad_username}" -Reset -NewPassword (ConvertTo-SecureString "{password}" -AsPlainText -Force)
     Enable-ADAccount -Identity "{ad_username}"
     '''
 
