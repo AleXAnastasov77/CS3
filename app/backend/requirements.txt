@@ -4,3 +4,17 @@ pymysql
 werkzeug
 python-dotenv
 python-jose
+# JWT (python-jose implemented correctly)
+python-jose==3.3.0
+
+# Active Directory
+ldap3==2.9.1
+
+# vSphere
+pyvmomi==8.0.2.0
+
+# Ansible + Windows support
+ansible==9.1.0
+pywinrm==0.4.3
+requests==2.31.0
+xmltodict==0.13.0

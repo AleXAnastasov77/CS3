@@ -1,0 +1,14 @@
+- hosts: all
+  gather_facts: no
+
+  tasks:
+    - name: Leave domain to WORKGROUP
+      win_domain_membership:
+        state: workgroup
+        workgroup_name: WORKGROUP
+      register: leave_result
+
+    - name: Reboot after unjoin
+      win_reboot:
+        msg: "Rebooting after domain unjoin"
+        reboot_timeout: 600
