@@ -1,5 +1,6 @@
 import os
-
+from dotenv import load_dotenv
+load_dotenv()
 class Config:
     # Flask
     SECRET_KEY = os.getenv("FLASK_SECRET_KEY")
@@ -29,7 +30,7 @@ class Config:
     # WinRM local admin
     WIN_LOCAL_PASS = os.getenv("WIN_LOCAL_PASS")
     WIN_LOCAL_USER = "Alex"
-    
+
     AD_SERVER = "192.168.0.10"
     AD_DOMAIN = "innovatech.internal"
     AD_ADMIN_USER = "INNOVATECH\\webserver"

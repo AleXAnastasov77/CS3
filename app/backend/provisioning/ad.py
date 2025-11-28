@@ -13,12 +13,12 @@ def create_ad_user(ad_username, first_name, last_name, email, password, ou_dn):
     Create and enable a user in AD under the given OU.
     ou_dn example: OU=HR,OU=Users,OU=Netherlands,DC=innovatech,DC=internal
     """
-    server = Server(Config.AD_SERVER, get_info=ALL, port=636, use_ssl=True)
+    server = Server(Config.AD_SERVER, get_info=ALL)
     conn = Connection(
         server,
         user=Config.AD_ADMIN_USER,
         password=Config.AD_ADMIN_PASS,
-        authentication=NTLM,
+        authentication="SIMPLE",
         auto_bind=True,
     )
 
