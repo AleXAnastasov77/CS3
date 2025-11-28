@@ -24,7 +24,7 @@ def _winrm_session():
     """Create a WinRM session to the DC."""
     return winrm.Session(
         f'http://{Config.AD_SERVER}:5985/wsman',
-        auth=("INNOVATECH\\webserver", Config.AD_ADMIN_PASS)
+        auth=("INNOVATECH\\Administrator", Config.AD_ADMIN_PASS)
     )
 
 
