@@ -2,7 +2,16 @@ from pyVim.connect import SmartConnect, Disconnect
 from pyVmomi import vim
 import ssl
 from config import Config
+from time import sleep
 
+def _wait_for_task(task):
+    while True:
+        state = task.info.state
+        if state == vim.TaskInfo.State.success:
+            return
+        if state == vim.TaskInfo.State.error:
+            raise Exception(f"Clone error: {task.info.error}")
+        sleep(1)
 
 def _connect_vsphere():
     """Create an unverified SSL connection to vCenter."""
@@ -122,8 +131,8 @@ def create_vsphere_vm(vm_name):
     task = template.CloneVM_Task(folder=folder, name=vm_name, spec=clone_spec)
 
     # Busy wait – simple but fine for now
-    while task.info.state == vim.TaskInfo.State.running:
-        continue
+    print("Clone started... waiting for completion.")
+    _wait_for_task(task)
 
     if task.info.state != vim.TaskInfo.State.success:
         print("=== RAW TASK INFO ===")
