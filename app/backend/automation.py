@@ -7,6 +7,7 @@ from provisioning.ansible_join import join_domain
 from provisioning.ansible_remove import unjoin_domain
 import time
 import winrm
+
 # -------------------------------------------------------------------
 # In-memory provisioning status (no DB changes)
 # -------------------------------------------------------------------
@@ -100,11 +101,11 @@ def _get_department_key(emp):
 # Background worker: only the slow domain join
 # -------------------------------------------------------------------
 
-def _domain_join_worker(ad_username, vm_ip, computer_ou):
+def _domain_join_worker(ad_username, vm_ip, computer_ou, vm_name):
     try:
         _set_status(ad_username, "joining_domain")
         wait_for_winrm(vm_ip)
-        join_domain(vm_ip, computer_ou)
+        join_domain(vm_ip, computer_ou, vm_name)
         _set_status(ad_username, "completed")
     except Exception as e:
         _set_status(ad_username, f"failed: {e}")
@@ -166,7 +167,7 @@ def provision_employee(emp, ad_password):
     _set_status(ad_username, "queued_for_domain_join")
     t = threading.Thread(
         target=_domain_join_worker,
-        args=(ad_username, vm_ip, computer_ou),
+        args=(ad_username, vm_ip, computer_ou, vm_name),
     )
     t.start()
 

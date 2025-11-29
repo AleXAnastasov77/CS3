@@ -4,12 +4,12 @@ import subprocess
 from config import Config
 
 
-def join_domain(vm_ip, computer_ou):
+def join_domain(vm_ip, computer_ou, vm_name):
     """
     Join a VM to the domain using its IP (most reliable).
-    """
+    """,
 
-    inventory = f"""[windows]
+    inventory = f"""[{vm_name}]
 {vm_ip} ansible_user={Config.WIN_LOCAL_USER} ansible_password={Config.WIN_LOCAL_PASS} ansible_connection=winrm ansible_winrm_transport=ntlm ansible_winrm_server_cert_validation=ignore ansible_winrm_scheme=http ansible_port=5985
 """
 
