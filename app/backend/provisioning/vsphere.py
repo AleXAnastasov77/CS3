@@ -126,9 +126,18 @@ def create_vsphere_vm(vm_name):
         continue
 
     if task.info.state != vim.TaskInfo.State.success:
-        err = task.info.error
+        print("=== RAW TASK INFO ===")
+        print("State:", task.info.state)
+        print("Error:", task.info.error)
+        print("Description:", task.info.description)
+        print("Name:", task.info.name)
+        print("Result:", task.info.result)
+        print("Reason:", task.info.reason)
+        print("Progress:", task.info.progress)
+        print("Localized Message:", getattr(task.info.error, "localizedMessage", None) if task.info.error else None)
         Disconnect(si)
-        raise Exception(f"VM clone failed: {err}")
+        raise Exception("Clone failed. Full info printed above.")
+
 
     Disconnect(si)
 
