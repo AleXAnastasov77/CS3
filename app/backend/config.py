@@ -26,7 +26,8 @@ class Config:
     VCENTER_DATASTORE = "NIM01-1"
     VCENTER_CLUSTER = "Netlab-Cluster-A"
     VCENTER_RESOURCE_POOL = "i547391"
-
+    VCENTER_DATACENTER = "Netlab-DC"
+    
     # WinRM local admin
     WIN_LOCAL_PASS = os.getenv("WIN_LOCAL_PASS")
     WIN_LOCAL_USER = "Alex"
