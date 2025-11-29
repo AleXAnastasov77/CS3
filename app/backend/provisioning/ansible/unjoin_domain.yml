@@ -2,13 +2,15 @@
   gather_facts: no
 
   tasks:
-    - name: Leave domain to WORKGROUP
-      win_domain_membership:
+
+    - name: Leave the domain and move to WORKGROUP
+      microsoft.ad.membership:
         state: workgroup
         workgroup_name: WORKGROUP
-      register: leave_result
+      register: unjoin_result
 
-    - name: Reboot after unjoin
+    - name: Reboot after domain unjoin
       win_reboot:
         msg: "Rebooting after domain unjoin"
         reboot_timeout: 600
+      when: unjoin_result.reboot_required

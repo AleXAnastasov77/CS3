@@ -2,17 +2,18 @@
   gather_facts: no
 
   tasks:
-    - name: Join domain in correct OU
-      win_domain_membership:
-        dns_domain_name: "{{ domain }}"
-        domain_admin_user: "{{ admin_user }}"
-        domain_admin_password: "{{ admin_pass }}"
-        hostname: "{{ inventory_hostname }}"
-        state: domain
-        ou: "{{ computer_ou }}"
-      register: join_result
 
-    - name: Reboot after join
+    - name: Join domain in correct OU (modern Microsoft AD module)
+      microsoft.ad.membership:
+        domain_name: "{{ domain }}"
+        domain_ou: "{{ computer_ou }}"
+        username: "{{ admin_user }}"
+        password: "{{ admin_pass }}"
+        state: domain
+      register: domain_join
+
+    - name: Reboot to finalize domain join
       win_reboot:
         msg: "Rebooting to complete domain join"
         reboot_timeout: 600
+      when: domain_join.reboot_required
