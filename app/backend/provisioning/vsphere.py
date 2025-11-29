@@ -1,7 +1,6 @@
 from pyVim.connect import SmartConnect, Disconnect
 from pyVmomi import vim
-import ssl
-import time
+import ssl, time
 from config import Config
 
 
@@ -15,165 +14,139 @@ def _connect_vsphere():
     )
 
 
-def _wait_for_task(task):
-    while task.info.state == vim.TaskInfo.State.running:
-        time.sleep(1)
-    return task.info.state == vim.TaskInfo.State.success
-
-
-def _get_vm_ip(vm_obj):
+def _find_resource_pool(datacenter):
     """
-    Extract IPv4 reported by VMware Tools.
-    Returns None if not found yet.
+    Recursively search *ALL* resource pools inside the datacenter, not only top level.
+    Needed because Netlab pools are nested (Cluster → _Courses-RP-A → MA-NCA1-RP → i547391)
     """
-    if not vm_obj.guest or not vm_obj.guest.net:
+
+    target = Config.VCENTER_RESOURCE_POOL
+
+    def walk(pool):
+        if pool.name == target:
+            return pool
+        for child in getattr(pool, "resourcePool", []):
+            found = walk(child)
+            if found:
+                return found
         return None
 
-    for nic in vm_obj.guest.net:
-        if not nic.ipConfig or not nic.ipConfig.ipAddress:
-            continue
-        for ip in nic.ipConfig.ipAddress:
-            if ":" not in ip.ipAddress:  # skip IPv6
-                return ip.ipAddress
+    # Iterate clusters
+    for cluster in datacenter.hostFolder.childEntity:
+        if isinstance(cluster, vim.ClusterComputeResource) and cluster.name == Config.VCENTER_CLUSTER:
+            return walk(cluster.resourcePool)
+
     return None
 
 
 def create_vsphere_vm(vm_name):
-    """
-    Clone a VM from the template and return its IP (IPv4).
-    """
     si = _connect_vsphere()
     content = si.RetrieveContent()
 
-    # -----------------------
-    # TEMPLATE
-    # -----------------------
+    # ---------------------------
+    # TEMPLATE & FOLDER
+    # ---------------------------
     template = content.searchIndex.FindByInventoryPath(Config.VCENTER_TEMPLATE_PATH)
     if not template:
         Disconnect(si)
         raise Exception(f"Template not found: {Config.VCENTER_TEMPLATE_PATH}")
 
-    # -----------------------
-    # FOLDER
-    # -----------------------
     folder = content.searchIndex.FindByInventoryPath(Config.VCENTER_VM_FOLDER_PATH)
     if not folder:
         Disconnect(si)
-        raise Exception(f"VM folder not found: {Config.VCENTER_VM_FOLDER_PATH}")
+        raise Exception(f"VM Folder not found: {Config.VCENTER_VM_FOLDER_PATH}")
 
-    # -----------------------
+    # ---------------------------
     # DATACENTER
-    # -----------------------
-    datacenter = next(
-        (dc for dc in content.rootFolder.childEntity
-         if isinstance(dc, vim.Datacenter) and dc.name == Config.VCENTER_DATACENTER),
-        None
-    )
+    # ---------------------------
+    datacenter = None
+    for dc in content.rootFolder.childEntity:
+        if isinstance(dc, vim.Datacenter) and dc.name == Config.VCENTER_DATACENTER:
+            datacenter = dc
+            break
     if not datacenter:
         Disconnect(si)
         raise Exception("Datacenter not found")
 
-    # -----------------------
-    # DATASTORE
-    # -----------------------
+    # ---------------------------
+    # DATASTORE (supports clusters & normal)
+    # ---------------------------
     datastore = None
     for entity in datacenter.datastoreFolder.childEntity:
         if isinstance(entity, vim.Datastore) and entity.name == Config.VCENTER_DATASTORE:
             datastore = entity
             break
 
-        if isinstance(entity, vim.StoragePod):
+        if isinstance(entity, vim.StoragePod):    # datastore cluster
             for ds in entity.childEntity:
                 if ds.name == Config.VCENTER_DATASTORE:
                     datastore = ds
                     break
 
-        if datastore:
-            break
-
     if not datastore:
         Disconnect(si)
         raise Exception("Datastore not found")
 
-    # -----------------------
-    # RESOURCE POOL / CLUSTER
-    # -----------------------
-    pool = None
-    for cluster in datacenter.hostFolder.childEntity:
-        if isinstance(cluster, vim.ClusterComputeResource) and cluster.name == Config.VCENTER_CLUSTER:
-
-            # Find child resource pools
-            for rp in cluster.resourcePool.resourcePool:
-                if rp.name == Config.VCENTER_RESOURCE_POOL:
-                    pool = rp
-                    break
-
-            # Or use cluster’s root pool
-            if not pool and cluster.resourcePool.name == Config.VCENTER_RESOURCE_POOL:
-                pool = cluster.resourcePool
-
-            break
-
+    # ---------------------------
+    # RESOURCE POOL (FULLY FIXED)
+    # ---------------------------
+    pool = _find_resource_pool(datacenter)
     if not pool:
         Disconnect(si)
-        raise Exception("Resource pool not found")
+        raise Exception(
+            f"Resource pool '{Config.VCENTER_RESOURCE_POOL}' not found "
+            f"in cluster '{Config.VCENTER_CLUSTER}'"
+        )
 
-    # -----------------------
-    # CLONE VM
-    # -----------------------
+    # ---------------------------
+    # CLONING
+    # ---------------------------
     relocate = vim.vm.RelocateSpec(datastore=datastore, pool=pool)
     clone_spec = vim.vm.CloneSpec(location=relocate, powerOn=True, template=False)
 
     task = template.CloneVM_Task(folder=folder, name=vm_name, spec=clone_spec)
-    if not _wait_for_task(task):
+    print("[vSphere] Clone task started — waiting for completion...")
+
+    while task.info.state == vim.TaskInfo.State.running:
+        time.sleep(2)
+
+    if task.info.state != vim.TaskInfo.State.success:
+        err = task.info.error
         Disconnect(si)
-        raise Exception(f"VM clone failed: {task.info.error}")
+        raise Exception(f"VM clone failed: {err}")
 
-    # -----------------------
-    # GET VM OBJECT
-    # -----------------------
-    vm_obj = content.searchIndex.FindByInventoryPath(
-        f"{Config.VCENTER_VM_FOLDER_PATH}/{vm_name}"
-    )
+    print(f"[vSphere] VM '{vm_name}' clone SUCCESS")
 
-    # -----------------------
-    # WAIT FOR VMWARE TOOLS & IP
-    # -----------------------
+    # ----------------------------------------------------
+    # GET VM IP (Poll the VMware guest tools until ready)
+    # ----------------------------------------------------
+    vm_obj = task.info.result
+
     ip = None
-    for _ in range(60):  # up to ~120 seconds
-        ip = _get_vm_ip(vm_obj)
-        if ip:
+    for _ in range(60):  
+        if vm_obj.guest and vm_obj.guest.ipAddress:
+            ip = vm_obj.guest.ipAddress
             break
         time.sleep(2)
 
     Disconnect(si)
 
     if not ip:
-        raise Exception(
-            "VM cloned but has no IP. VMware Tools may not be running on the template."
-        )
+        raise Exception("VM cloned but no IP acquired (VMware Tools not ready?)")
 
-    return ip  # crucial
+    print(f"[vSphere] VM '{vm_name}' IP acquired: {ip}")
+    return ip
 
 
 def delete_vsphere_vm(vm_name):
-    """
-    Deletes a VM by DNS name or VM name.
-    """
     si = _connect_vsphere()
     content = si.RetrieveContent()
 
-    # Try DNS name lookup first
     vm = content.searchIndex.FindByDnsName(None, vm_name, True)
-
-    # Fallback: search by inventory path
-    if not vm:
-        vm = content.searchIndex.FindByInventoryPath(
-            f"{Config.VCENTER_VM_FOLDER_PATH}/{vm_name}"
-        )
-
     if vm:
         task = vm.Destroy_Task()
-        _wait_for_task(task)
+        print(f"[vSphere] Deleting VM '{vm_name}'...")
+        while task.info.state == vim.TaskInfo.State.running:
+            time.sleep(2)
 
     Disconnect(si)
