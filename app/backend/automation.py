@@ -14,25 +14,30 @@ import winrm
 PROVISION_STATUS = {}  # key = ad_username, value = string status
 
 
-def wait_for_winrm(ip, timeout=300):
-    """Retry WinRM connection until VM is ready."""
+def wait_for_winrm(ip, timeout=600):
+    """Retry WinRM until it responds reliably."""
     print(f"[WAIT] Waiting for WinRM on {ip} ...")
     start = time.time()
 
     while time.time() - start < timeout:
         try:
-            s = winrm.Session(f"http://{ip}:5985/wsman", auth=("Alex", "Admin123"))
-            r = s.run_cmd("hostname")
-            if r.std_out:
-                print("[WAIT] WinRM is ready.")
+            s = winrm.Session(
+                f"http://{ip}:5985/wsman",
+                auth=("Alex", "Admin123"),
+                read_timeout_sec=20,
+                operation_timeout_sec=20
+            )
+            r = s.run_cmd("echo winrm_ready")
+            if b"winrm_ready" in r.std_out:
+                print(f"\n[WAIT] WinRM is READY on {ip}")
                 return True
         except Exception:
             pass
 
         print(".", end="", flush=True)
-        time.sleep(5)
+        time.sleep(3)
 
-    raise Exception("WinRM did not become ready within timeout")
+    raise Exception(f"WinRM did not become ready within {timeout} seconds")
 
 def _set_status(username, status: str):
     PROVISION_STATUS[username] = status
