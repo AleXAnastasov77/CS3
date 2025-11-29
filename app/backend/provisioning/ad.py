@@ -71,19 +71,41 @@ def create_ad_user(ad_username, first_name, last_name, email, password, ou_dn):
 
     conn.unbind()
 
-    # -----------------------
-    # 2. SET PASSWORD (WinRM)
-    # -----------------------
     ps_script = f'''
-    Set-ADAccountPassword -Identity "{ad_username}" -Reset -NewPassword (ConvertTo-SecureString "{password}" -AsPlainText -Force)
-    Enable-ADAccount -Identity "{ad_username}"
+    try {{
+        Import-Module ActiveDirectory
+
+        Set-ADAccountPassword -Identity "{ad_username}" -Reset -NewPassword (ConvertTo-SecureString "{password}" -AsPlainText -Force)
+        Enable-ADAccount -Identity "{ad_username}"
+
+        Write-Output "SUCCESS"
+    }}
+    catch {{
+        Write-Output "ERROR: $($_.Exception.Message)"
+    }}
     '''
 
     session = _winrm_session()
     result = session.run_ps(ps_script)
 
-    if result.std_err:
-        raise Exception(f"Failed to set AD password: {result.std_err.decode()}")
+    stdout = result.std_out.decode().strip()
+    stderr = result.std_err.decode().strip()
+
+    # Ignore harmless CLIXML progress spam
+    if stderr.startswith("#< CLIXML"):
+        stderr = ""
+
+    # If PowerShell returned a structured error:
+    if "ERROR:" in stdout:
+        raise Exception(f"Failed to set AD password: {stdout}")
+
+    # If stderr still contains unexpected errors:
+    if stderr and "CLIXML" not in stderr:
+        raise Exception(f"Unexpected WinRM error: {stderr}")
+
+    # Only return success if PowerShell explicitly printed SUCCESS
+    if "SUCCESS" not in stdout:
+        raise Exception(f"Unexpected PowerShell output: {stdout}")
 
     return True
 
