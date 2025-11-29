@@ -167,7 +167,7 @@ def provision_employee(emp, ad_password):
     _set_status(ad_username, "queued_for_domain_join")
     t = threading.Thread(
         target=_domain_join_worker,
-        args=(ad_username, vm_ip, vm_name, computer_ou),
+        args=(ad_username, vm_ip, computer_ou, vm_name),
     )
     t.start()
 
