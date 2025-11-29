@@ -125,7 +125,6 @@ def create_vsphere_vm(vm_name):
     task = template.CloneVM_Task(folder=folder, name=vm_name, spec=clone_spec)
     print("[vSphere] Clone task started — waiting for completion...")
 
-    task = template.CloneVM_Task(folder=folder, name=vm_name, spec=clone_spec)
 
     # Properly wait for it
     wait_for_task(task)
