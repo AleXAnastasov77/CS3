@@ -105,7 +105,7 @@ def _domain_join_worker(ad_username, vm_ip, computer_ou, vm_name):
     try:
         _set_status(ad_username, "joining_domain")
         wait_for_winrm(vm_ip)
-        join_domain(vm_ip, computer_ou, vm_name)
+        join_domain(vm_ip, vm_name, computer_ou)
         _set_status(ad_username, "completed")
     except Exception as e:
         _set_status(ad_username, f"failed: {e}")
@@ -167,7 +167,7 @@ def provision_employee(emp, ad_password):
     _set_status(ad_username, "queued_for_domain_join")
     t = threading.Thread(
         target=_domain_join_worker,
-        args=(ad_username, vm_ip, computer_ou, vm_name),
+        args=(ad_username, vm_ip, vm_name, computer_ou),
     )
     t.start()
 
