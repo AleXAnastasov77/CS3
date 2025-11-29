@@ -30,6 +30,15 @@ def create_vsphere_vm(vm_name):
 
     # datastore
     datacenter = None
+    for dc in content.rootFolder.childEntity:
+        if isinstance(dc, vim.Datacenter) and dc.name == Config.VCENTER_DATACENTER:
+            datacenter = dc
+            break
+    if not datacenter:
+        Disconnect(si)
+        raise Exception("Datacenter not found")
+
+    # Locate datastore (handles both datastore clusters & individual datastores)
     datastore = None
 
     for entity in datacenter.datastoreFolder.childEntity:
@@ -51,6 +60,7 @@ def create_vsphere_vm(vm_name):
     if not datastore:
         Disconnect(si)
         raise Exception("Datastore not found (checked datastore folders AND storage pods)")
+
 
     # resource pool
     pool = None
