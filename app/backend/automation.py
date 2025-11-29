@@ -155,7 +155,6 @@ def provision_employee(emp, ad_password):
     t = threading.Thread(
         target=_domain_join_worker,
         args=(ad_username, vm_ip, computer_ou),
-        daemon=True,
     )
     t.start()
 
