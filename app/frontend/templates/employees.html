@@ -21,6 +21,7 @@
                 <th class="px-4 py-2">AD Username</th>
                 <th class="px-4 py-2">VM</th>
                 <th class="px-4 py-2">Status</th>
+                <th class="px-4 py-2">Provisioning</th>
                 <th class="px-4 py-2">Actions</th>
             </tr>
         </thead>
@@ -81,6 +82,9 @@ function renderEmployees(employees) {
                     ? '<span class="text-green-600 font-semibold">Active</span>'
                     : '<span class="text-gray-500">Deactivated</span>'}
             </td>
+            <td class="px-4 py-2 text-center" id="prov-${e.ad_username}">
+                <span class="text-gray-400">—</span>
+            </td>
             <td class="px-4 py-2 text-center">
                 ${e.status === "active"
                     ? '<button data-id="'+e.id+'" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 deactivate-btn">Deactivate</button>'
@@ -89,6 +93,9 @@ function renderEmployees(employees) {
         `;
 
         tbody.appendChild(tr);
+
+        // Start polling provisioning status for this employee
+        startProvisionPolling(e.ad_username);
     });
 
     document.querySelectorAll(".deactivate-btn").forEach(btn => {
@@ -119,6 +126,54 @@ async function deactivateEmployee(id) {
 
     showFlash("Employee deactivated");
     loadEmployees();
+}
+
+// Poll backend for provisioning status of a specific user
+function startProvisionPolling(username) {
+    const cell = document.getElementById(`prov-${username}`);
+    if (!cell) return;
+
+    async function pollOnce() {
+        const token = getToken();
+        if (!token) return;
+
+        try {
+            const resp = await fetch(API_BASE + `/provision/status/${username}`, {
+                headers: { "Authorization": "Bearer " + token }
+            });
+
+            const data = await resp.json();
+            const status = data.status;
+
+            if (!status) {
+                // No active process
+                cell.innerHTML = '<span class="text-gray-400">—</span>';
+                return;
+            }
+
+            if (status === "completed") {
+                cell.innerHTML = '<span class="text-green-600 font-semibold">Completed</span>';
+                return;
+            }
+
+            if (status.startsWith("failed")) {
+                cell.innerHTML = '<span class="text-red-600 font-semibold">Failed</span>';
+                return;
+            }
+
+            // Active step
+            cell.innerHTML = `<span class="text-blue-600">${status.replace(/_/g, " ")}</span>`;
+
+            // continue polling while active
+            setTimeout(pollOnce, 3000);
+
+        } catch (err) {
+            console.error("Error polling status for", username, err);
+        }
+    }
+
+    // kick it off
+    pollOnce();
 }
 
 document.addEventListener("DOMContentLoaded", loadEmployees);

@@ -1,3 +1,4 @@
+import threading
 from config import Config
 from db import get_conn
 from provisioning.ad import create_ad_user, disable_ad_user
@@ -5,6 +6,21 @@ from provisioning.vsphere import create_vsphere_vm, delete_vsphere_vm
 from provisioning.ansible_join import join_domain
 from provisioning.ansible_remove import unjoin_domain
 
+# -------------------------------------------------------------------
+# In-memory provisioning status (no DB changes)
+# -------------------------------------------------------------------
+
+PROVISION_STATUS = {}  # key = ad_username, value = string status
+
+
+def _set_status(username, status: str):
+    PROVISION_STATUS[username] = status
+    print(f"[STATUS] {username}: {status}")
+
+
+# -------------------------------------------------------------------
+# Department helper (unchanged)
+# -------------------------------------------------------------------
 
 def _get_department_key(emp):
     """
@@ -42,6 +58,23 @@ def _get_department_key(emp):
     return "IT"  # sane default
 
 
+# -------------------------------------------------------------------
+# Background worker: only the slow domain join
+# -------------------------------------------------------------------
+
+def _domain_join_worker(ad_username, vm_ip, computer_ou):
+    try:
+        _set_status(ad_username, "joining_domain")
+        join_domain(vm_ip, computer_ou)
+        _set_status(ad_username, "completed")
+    except Exception as e:
+        _set_status(ad_username, f"failed: {e}")
+
+
+# -------------------------------------------------------------------
+# Provision: called from create_employee()
+# -------------------------------------------------------------------
+
 def provision_employee(emp, ad_password):
     """
     Called from create_employee() after DB insert.
@@ -67,6 +100,7 @@ def provision_employee(emp, ad_password):
     # -------------------------
     # 1) Create AD User
     # -------------------------
+    _set_status(ad_username, "creating_ad_user")
     create_ad_user(
         ad_username=ad_username,
         first_name=first,
@@ -77,21 +111,34 @@ def provision_employee(emp, ad_password):
     )
 
     # -------------------------
-    # 2) Clone VM from template
+    # 2) Clone VM from template (sync)
     #    create_vsphere_vm returns the VM IP now
     # -------------------------
     vm_name = f"vm-{ad_username}"
-    vm_ip = create_vsphere_vm(vm_name)  # <---- VERY IMPORTANT
+    _set_status(ad_username, "cloning_vm")
+    vm_ip = create_vsphere_vm(vm_name)
     print(f"[INFO] VM '{vm_name}' IP acquired: {vm_ip}")
+    _set_status(ad_username, "vm_ready")
 
     # -------------------------
-    # 3) Join VM to domain
+    # 3) Join VM to domain (ASYNC)
     #    IMPORTANT: use IP, not hostname
     # -------------------------
-    join_domain(vm_ip, computer_ou)
+    _set_status(ad_username, "queued_for_domain_join")
+    t = threading.Thread(
+        target=_domain_join_worker,
+        args=(ad_username, vm_ip, computer_ou),
+        daemon=True,
+    )
+    t.start()
 
+    # API still gets the same return type as before
     return vm_name, vm_ip
 
+
+# -------------------------------------------------------------------
+# Deprovision: keeps your warning prints
+# -------------------------------------------------------------------
 
 def deprovision_employee(emp):
     """
@@ -116,5 +163,8 @@ def deprovision_employee(emp):
             delete_vsphere_vm(vm_name)
         except Exception as e:
             print("WARNING: delete_vsphere_vm failed:", e)
+
+    # Drop any in-memory status
+    PROVISION_STATUS.pop(ad_username, None)
 
     return True

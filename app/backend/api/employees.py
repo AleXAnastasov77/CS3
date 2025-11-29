@@ -183,3 +183,8 @@ def deactivate_employee(emp_id):
         conn.close()
 
     return jsonify({"message": "Employee deactivated"})
+
+@employees_bp.route("/provision/status/<username>")
+def get_status(username):
+    from automation import PROVISION_STATUS
+    return {"status": PROVISION_STATUS.get(username, "unknown")}
