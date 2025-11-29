@@ -2,6 +2,15 @@
   gather_facts: no
 
   tasks:
+    - name: Set new hostname before domain join
+      ansible.windows.win_hostname:
+        name: "{{ inventory_hostname }}"
+      register: rename_result
+
+    - name: Reboot if hostname changed
+      ansible.windows.win_reboot:
+        msg: "Rebooting after hostname change"
+      when: rename_result.reboot_required
 
     - name: Join domain in correct OU
       microsoft.ad.membership:
