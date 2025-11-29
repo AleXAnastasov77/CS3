@@ -5,13 +5,34 @@ from provisioning.ad import create_ad_user, disable_ad_user
 from provisioning.vsphere import create_vsphere_vm, delete_vsphere_vm
 from provisioning.ansible_join import join_domain
 from provisioning.ansible_remove import unjoin_domain
-
+import time
+import winrm
 # -------------------------------------------------------------------
 # In-memory provisioning status (no DB changes)
 # -------------------------------------------------------------------
 
 PROVISION_STATUS = {}  # key = ad_username, value = string status
 
+
+def wait_for_winrm(ip, timeout=300):
+    """Retry WinRM connection until VM is ready."""
+    print(f"[WAIT] Waiting for WinRM on {ip} ...")
+    start = time.time()
+
+    while time.time() - start < timeout:
+        try:
+            s = winrm.Session(f"http://{ip}:5985/wsman", auth=("Alex", "Admin123"))
+            r = s.run_cmd("hostname")
+            if r.std_out:
+                print("[WAIT] WinRM is ready.")
+                return True
+        except Exception:
+            pass
+
+        print(".", end="", flush=True)
+        time.sleep(5)
+
+    raise Exception("WinRM did not become ready within timeout")
 
 def _set_status(username, status: str):
     PROVISION_STATUS[username] = status
@@ -65,6 +86,7 @@ def _get_department_key(emp):
 def _domain_join_worker(ad_username, vm_ip, computer_ou):
     try:
         _set_status(ad_username, "joining_domain")
+        wait_for_winrm(vm_ip)
         join_domain(vm_ip, computer_ou)
         _set_status(ad_username, "completed")
     except Exception as e:
