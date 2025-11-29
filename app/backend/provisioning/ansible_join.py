@@ -10,7 +10,7 @@ def join_domain(vm_ip, computer_ou):
     """
 
     inventory = f"""[windows]
-{vm_ip} ansible_user={Config.WIN_LOCAL_USER} ansible_password={Config.WIN_LOCAL_PASS} ansible_connection=winrm ansible_winrm_transport=ntlm ansible_winrm_server_cert_validation=ignore
+{vm_ip} ansible_user={Config.WIN_LOCAL_USER} ansible_password={Config.WIN_LOCAL_PASS} ansible_connection=winrm ansible_winrm_transport=ntlm ansible_winrm_server_cert_validation=ignore ansible_winrm_scheme=http ansible_port=5985
 """
 
     with tempfile.NamedTemporaryFile("w", delete=False) as inv:
