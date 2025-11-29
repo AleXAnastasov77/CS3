@@ -3,14 +3,14 @@
 
   tasks:
 
-    - name: Leave the domain and move to WORKGROUP
+    - name: Leave domain (move to WORKGROUP)
       microsoft.ad.membership:
         state: workgroup
         workgroup_name: WORKGROUP
-      register: unjoin_result
+      register: leave_result
 
-    - name: Reboot after domain unjoin
+    - name: Reboot after unjoin
       win_reboot:
         msg: "Rebooting after domain unjoin"
         reboot_timeout: 600
-      when: unjoin_result.reboot_required
+      when: leave_result.reboot_required
