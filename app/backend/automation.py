@@ -16,7 +16,10 @@ def _get_department_key(emp):
         conn = get_conn()
         try:
             with conn.cursor() as cur:
-                cur.execute("SELECT name FROM departments WHERE id=%s", (emp["department_id"],))
+                cur.execute(
+                    "SELECT name FROM departments WHERE id=%s",
+                    (emp["department_id"],)
+                )
                 row = cur.fetchone()
                 if row:
                     name = row["name"]
@@ -50,6 +53,7 @@ def provision_employee(emp, ad_password):
     last = emp["last_name"]
     email = emp["email"]
 
+    # Determine department OUs
     dept_key = _get_department_key(emp)
 
     user_ou = Config.AD_USER_OU.get(dept_key)
@@ -60,7 +64,9 @@ def provision_employee(emp, ad_password):
     if not computer_ou:
         computer_ou = next(iter(Config.AD_COMPUTER_OU.values()))
 
-    # 1) Create AD user in correct Users OU
+    # -------------------------
+    # 1) Create AD User
+    # -------------------------
     create_ad_user(
         ad_username=ad_username,
         first_name=first,
@@ -70,14 +76,21 @@ def provision_employee(emp, ad_password):
         ou_dn=user_ou,
     )
 
+    # -------------------------
     # 2) Clone VM from template
+    #    create_vsphere_vm returns the VM IP now
+    # -------------------------
     vm_name = f"vm-{ad_username}"
-    create_vsphere_vm(vm_name)
+    vm_ip = create_vsphere_vm(vm_name)  # <---- VERY IMPORTANT
+    print(f"[INFO] VM '{vm_name}' IP acquired: {vm_ip}")
 
-    # 3) Join VM to domain (computer object in correct Computers OU)
-    join_domain(vm_name, computer_ou)
+    # -------------------------
+    # 3) Join VM to domain
+    #    IMPORTANT: use IP, not hostname
+    # -------------------------
+    join_domain(vm_ip, computer_ou)
 
-    return vm_name
+    return vm_name, vm_ip
 
 
 def deprovision_employee(emp):
@@ -87,17 +100,17 @@ def deprovision_employee(emp):
     ad_username = emp["ad_username"]
     vm_name = emp.get("vm_name")
 
-    # 1) Disable AD user (we keep the object but disabled)
+    # 1) Disable AD user
     disable_ad_user(ad_username)
 
     # 2) Try unjoining from domain (if VM still reachable)
     if vm_name:
         try:
-            unjoin_domain(vm_name)
+            unjoin_domain(vm_name)  # unjoin still uses hostname/IP check inside
         except Exception as e:
             print("WARNING: unjoin_domain failed:", e)
 
-    # 3) Delete VM from vSphere
+    # 3) Delete VM
     if vm_name:
         try:
             delete_vsphere_vm(vm_name)

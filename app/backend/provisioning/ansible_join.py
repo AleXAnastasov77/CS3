@@ -4,13 +4,13 @@ import subprocess
 from config import Config
 
 
-def join_domain(vm_name, computer_ou):
+def join_domain(vm_ip, computer_ou):
     """
-    Run Ansible playbook to join the VM to the domain.
-    Computer object will be created in computer_ou.
+    Join a VM to the domain using its IP (most reliable).
     """
-    inventory = f"""[{vm_name}]
-{vm_name} ansible_user={Config.WIN_LOCAL_USER} ansible_password={Config.WIN_LOCAL_PASS} ansible_connection=winrm ansible_winrm_transport=ntlm ansible_winrm_server_cert_validation=ignore
+
+    inventory = f"""[windows]
+{vm_ip} ansible_user={Config.WIN_LOCAL_USER} ansible_password={Config.WIN_LOCAL_PASS} ansible_connection=winrm ansible_winrm_transport=ntlm ansible_winrm_server_cert_validation=ignore
 """
 
     with tempfile.NamedTemporaryFile("w", delete=False) as inv:
@@ -31,5 +31,4 @@ def join_domain(vm_name, computer_ou):
     ]
 
     subprocess.run(cmd, check=True)
-
     os.remove(inv_path)
