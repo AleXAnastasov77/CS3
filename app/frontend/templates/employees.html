@@ -20,7 +20,7 @@
             <col class="w-1/6">   <!-- Department -->
             <col class="w-1/6">   <!-- AD Username -->
             <col class="w-1/6">   <!-- VM -->
-            <col class="w-1/12">  <!-- Status -->
+            <col class="w-1/12">  <!-- Provisioning -->
             <col class="w-1/12">  <!-- Actions -->
         </colgroup>
 
@@ -31,17 +31,15 @@
                 <th class="px-4 py-2 text-left">Department</th>
                 <th class="px-4 py-2 text-left">AD Username</th>
                 <th class="px-4 py-2 text-left">VM</th>
-                <th class="px-4 py-2 text-center">Status</th>
+                <th class="px-4 py-2 text-center">Provisioning</th>
                 <th class="px-4 py-2 text-center">Actions</th>
             </tr>
         </thead>
 
-        <tbody id="employees-body" class="divide-y divide-gray-100">
-        </tbody>
+        <tbody id="employees-body" class="divide-y divide-gray-100"></tbody>
 
     </table>
 </div>
-
 {% endblock %}
 
 {% block scripts %}
@@ -90,11 +88,6 @@ function renderEmployees(employees) {
             <td class="px-4 py-2 text-center">${e.department_name}</td>
             <td class="px-4 py-2 text-center">${e.ad_username}</td>
             <td class="px-4 py-2 text-center">${e.vm_name || "-"}</td>
-            <td class="px-4 py-2 text-center">
-                ${e.status === "active"
-                    ? '<span class="text-green-600 font-semibold">Active</span>'
-                    : '<span class="text-gray-500">Deactivated</span>'}
-            </td>
             <td class="px-4 py-2 text-center" id="prov-${e.ad_username}">
                 <span class="text-gray-400">—</span>
             </td>
