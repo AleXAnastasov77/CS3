@@ -18,26 +18,38 @@ def wait_for_winrm(ip, timeout=600):
     """Retry WinRM until it responds reliably."""
     print(f"[WAIT] Waiting for WinRM on {ip} ...")
     start = time.time()
+    attempt = 0
 
     while time.time() - start < timeout:
+        attempt += 1
         try:
             s = winrm.Session(
                 f"http://{ip}:5985/wsman",
-                auth=("Alex", "Admin123"),
+                auth=(Config.WIN_LOCAL_USER, Config.WIN_LOCAL_PASS),
                 read_timeout_sec=20,
                 operation_timeout_sec=20
             )
-            r = s.run_cmd("echo winrm_ready")
-            if b"winrm_ready" in r.std_out:
-                print(f"\n[WAIT] WinRM is READY on {ip}")
+            r = s.run_cmd("hostname")
+
+            print(
+                f"\n[WAIT-DEBUG] attempt={attempt} "
+                f"status={r.status_code} "
+                f"stdout={r.std_out.decode(errors='ignore')!r} "
+                f"stderr={r.std_err.decode(errors='ignore')!r}"
+            )
+
+            if r.status_code == 0:
+                print(f"[WAIT] WinRM is READY on {ip}")
                 return True
-        except Exception:
-            pass
+
+        except Exception as e:
+            print(f"\n[WAIT-DEBUG] attempt={attempt} exception: {e}")
 
         print(".", end="", flush=True)
-        time.sleep(3)
+        time.sleep(5)
 
     raise Exception(f"WinRM did not become ready within {timeout} seconds")
+
 
 def _set_status(username, status: str):
     PROVISION_STATUS[username] = status
