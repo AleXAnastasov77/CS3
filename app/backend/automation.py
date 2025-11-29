@@ -26,8 +26,8 @@ def wait_for_winrm(ip, timeout=600):
             s = winrm.Session(
                 f"http://{ip}:5985/wsman",
                 auth=(Config.WIN_LOCAL_USER, Config.WIN_LOCAL_PASS),
-                read_timeout_sec=20,
-                operation_timeout_sec=20
+                read_timeout_sec=60,
+                operation_timeout_sec=30
             )
             r = s.run_cmd("hostname")
 
