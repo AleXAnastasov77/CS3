@@ -4,7 +4,7 @@
   tasks:
     - name: Set new hostname before domain join
       ansible.windows.win_hostname:
-        name: "{{ inventory_hostname }}"
+        name: "{{ new_hostname }}"
       register: rename_result
 
     - name: Reboot if hostname changed
