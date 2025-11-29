@@ -3,6 +3,24 @@ from pyVmomi import vim
 import ssl, time
 from config import Config
 
+def wait_for_task(task):
+    """Waits for a vSphere task to finish and returns the result or raises an error."""
+    import time
+
+    while True:
+        state = task.info.state
+
+        if state == "success":
+            return task.info.result
+
+        if state == "error":
+            # Return full structured error for debugging
+            err = task.info.error
+            msg = getattr(err, "msg", None) or getattr(err, "localizedMessage", None)
+            raise Exception(f"vSphere task failed: {msg}")
+
+        time.sleep(1)
+
 
 def _connect_vsphere():
     ctx = ssl._create_unverified_context()
@@ -107,13 +125,12 @@ def create_vsphere_vm(vm_name):
     task = template.CloneVM_Task(folder=folder, name=vm_name, spec=clone_spec)
     print("[vSphere] Clone task started — waiting for completion...")
 
-    while task.info.state == vim.TaskInfo.State.running:
-        time.sleep(2)
+    task = template.CloneVM_Task(folder=folder, name=vm_name, spec=clone_spec)
 
-    if task.info.state != vim.TaskInfo.State.success:
-        err = task.info.error
-        Disconnect(si)
-        raise Exception(f"VM clone failed: {err}")
+    # Properly wait for it
+    wait_for_task(task)
+
+    print(f"[OK] VM '{vm_name}' cloned successfully.")
 
     print(f"[vSphere] VM '{vm_name}' clone SUCCESS")
 
@@ -146,7 +163,6 @@ def delete_vsphere_vm(vm_name):
     if vm:
         task = vm.Destroy_Task()
         print(f"[vSphere] Deleting VM '{vm_name}'...")
-        while task.info.state == vim.TaskInfo.State.running:
-            time.sleep(2)
+        wait_for_task(task)
 
     Disconnect(si)

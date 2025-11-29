@@ -12,23 +12,36 @@
 </div>
 
 <div class="bg-white shadow-md rounded">
-    <table class="min-w-full table-auto" id="employees-table">
+    <table class="min-w-full table-fixed border-collapse" id="employees-table">
+
+        <colgroup>
+            <col class="w-1/6">   <!-- Name -->
+            <col class="w-1/6">   <!-- Email -->
+            <col class="w-1/6">   <!-- Department -->
+            <col class="w-1/6">   <!-- AD Username -->
+            <col class="w-1/6">   <!-- VM -->
+            <col class="w-1/12">  <!-- Status -->
+            <col class="w-1/12">  <!-- Actions -->
+        </colgroup>
+
         <thead class="bg-gray-200 text-gray-700">
             <tr>
                 <th class="px-4 py-2 text-left">Name</th>
                 <th class="px-4 py-2 text-left">Email</th>
-                <th class="px-4 py-2">Department</th>
-                <th class="px-4 py-2">AD Username</th>
-                <th class="px-4 py-2">VM</th>
-                <th class="px-4 py-2">Status</th>
-                <th class="px-4 py-2">Provisioning</th>
-                <th class="px-4 py-2">Actions</th>
+                <th class="px-4 py-2 text-left">Department</th>
+                <th class="px-4 py-2 text-left">AD Username</th>
+                <th class="px-4 py-2 text-left">VM</th>
+                <th class="px-4 py-2 text-center">Status</th>
+                <th class="px-4 py-2 text-center">Actions</th>
             </tr>
         </thead>
-        <tbody id="employees-body">
+
+        <tbody id="employees-body" class="divide-y divide-gray-100">
         </tbody>
+
     </table>
 </div>
+
 {% endblock %}
 
 {% block scripts %}
