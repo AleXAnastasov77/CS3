@@ -4,6 +4,7 @@ from jwt_utils import jwt_required
 from automation import provision_employee, deprovision_employee
 import pymysql
 from werkzeug.security import generate_password_hash
+from automation import PROVISION_STATUS
 
 employees_bp = Blueprint("employees_api", __name__)
 
@@ -186,5 +187,5 @@ def deactivate_employee(emp_id):
 
 @employees_bp.route("/provision/status/<username>")
 def get_status(username):
-    from automation import PROVISION_STATUS
+    
     return {"status": PROVISION_STATUS.get(username, "unknown")}
