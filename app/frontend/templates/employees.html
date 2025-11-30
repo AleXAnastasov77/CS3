@@ -43,16 +43,13 @@
 {% endblock %}
 
 {% block scripts %}
-<!-- Redirect immediately if no JWT -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
     if (!localStorage.getItem("hr_jwt")) {
         window.location.href = "/login";
     }
 });
-</script>
 
-<script>
 async function loadEmployees() {
     const token = getToken();
     if (!token) {
@@ -74,6 +71,13 @@ async function loadEmployees() {
     renderEmployees(data);
 }
 
+function formatStatus(s) {
+    if (!s || s === "active") return '<span class="text-gray-400">—</span>';
+    if (s.startsWith("failed")) return '<span class="text-red-600 font-semibold">Failed</span>';
+    if (s === "completed") return '<span class="text-green-600 font-semibold">Completed</span>';
+    return `<span class="text-blue-600">${s.replace(/_/g, " ")}</span>`;
+}
+
 function renderEmployees(employees) {
     const tbody = document.getElementById("employees-body");
     tbody.innerHTML = "";
@@ -88,21 +92,15 @@ function renderEmployees(employees) {
             <td class="px-4 py-2 text-center">${e.department_name}</td>
             <td class="px-4 py-2 text-center">${e.ad_username}</td>
             <td class="px-4 py-2 text-center">${e.vm_name || "-"}</td>
-            <td class="px-4 py-2 text-center" id="prov-${e.ad_username}">
-                <span class="text-gray-400">—</span>
-            </td>
+            <td class="px-4 py-2 text-center">${formatStatus(e.status)}</td>
             <td class="px-4 py-2 text-center">
-                ${e.status === "active"
+                ${e.status !== "deactivated"
                     ? '<button data-id="'+e.id+'" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 deactivate-btn">Deactivate</button>'
                     : '<span class="text-gray-400">—</span>'}
             </td>
         `;
 
-
         tbody.appendChild(tr);
-
-        // Start polling provisioning status for this employee
-        startProvisionPolling(e.ad_username);
     });
 
     document.querySelectorAll(".deactivate-btn").forEach(btn => {
@@ -135,53 +133,7 @@ async function deactivateEmployee(id) {
     loadEmployees();
 }
 
-// Poll backend for provisioning status of a specific user
-function startProvisionPolling(username) {
-    const cell = document.getElementById(`prov-${username}`);
-    if (!cell) return;
-
-    async function pollOnce() {
-        const token = getToken();
-        if (!token) return;
-
-        try {
-            const resp = await fetch(API_BASE + `/provision/status/${username}`, {
-                headers: { "Authorization": "Bearer " + token }
-            });
-
-            const data = await resp.json();
-            const status = data.status;
-
-            if (!status || status === "unknown") {
-                cell.innerHTML = '<span class="text-gray-400">—</span>';
-                setTimeout(pollOnce, 2000);
-                return;
-            }
-
-            if (status === "completed") {
-                cell.innerHTML = '<span class="text-green-600 font-semibold">Completed</span>';
-                return;  // stop polling
-            }
-
-            if (status.startsWith("failed")) {
-                cell.innerHTML = '<span class="text-red-600 font-semibold">Failed</span>';
-                return;  // stop polling
-            }
-
-            // Active status
-            cell.innerHTML = `<span class="text-blue-600">${status.replace(/_/g, " ")}</span>`;
-            setTimeout(pollOnce, 2000);
-
-
-        } catch (err) {
-            console.error("Error polling status for", username, err);
-        }
-    }
-
-    // kick it off
-    pollOnce();
-}
-
 document.addEventListener("DOMContentLoaded", loadEmployees);
 </script>
 {% endblock %}
+

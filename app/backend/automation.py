@@ -12,7 +12,7 @@ import winrm
 # In-memory provisioning status (no DB changes)
 # -------------------------------------------------------------------
 
-PROVISION_STATUS = {}  # key = ad_username, value = string status
+
 
 
 def wait_for_winrm(ip, timeout=600):
@@ -52,9 +52,19 @@ def wait_for_winrm(ip, timeout=600):
     raise Exception(f"WinRM did not become ready within {timeout} seconds")
 
 
-def _set_status(username, status: str):
-    PROVISION_STATUS[username] = status
-    print(f"[STATUS] {username}: {status}")
+def _set_status(ad_username, status):
+    conn = get_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE employees SET status=%s WHERE ad_username=%s",
+                (status, ad_username)
+            )
+            conn.commit()
+    finally:
+        conn.close()
+
+    print(f"[STATUS] {ad_username}: {status}")
 
 
 # -------------------------------------------------------------------
