@@ -172,7 +172,7 @@ def provision_employee(emp, ad_password):
     t.start()
 
     # API still gets the same return type as before
-    return vm_name, vm_ip
+    return vm_name
 
 
 # -------------------------------------------------------------------

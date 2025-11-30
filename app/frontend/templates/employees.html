@@ -152,27 +152,26 @@ function startProvisionPolling(username) {
             const data = await resp.json();
             const status = data.status;
 
-            if (!status) {
-                // No active process
+            if (!status || status === "unknown") {
                 cell.innerHTML = '<span class="text-gray-400">—</span>';
+                setTimeout(pollOnce, 2000);
                 return;
             }
 
             if (status === "completed") {
                 cell.innerHTML = '<span class="text-green-600 font-semibold">Completed</span>';
-                return;
+                return;  // stop polling
             }
 
             if (status.startsWith("failed")) {
                 cell.innerHTML = '<span class="text-red-600 font-semibold">Failed</span>';
-                return;
+                return;  // stop polling
             }
 
-            // Active step
+            // Active status
             cell.innerHTML = `<span class="text-blue-600">${status.replace(/_/g, " ")}</span>`;
+            setTimeout(pollOnce, 2000);
 
-            // continue polling while active
-            setTimeout(pollOnce, 3000);
 
         } catch (err) {
             console.error("Error polling status for", username, err);
