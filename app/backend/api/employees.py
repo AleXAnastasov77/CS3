@@ -4,7 +4,7 @@ from jwt_utils import jwt_required
 from automation import provision_employee, deprovision_employee
 import pymysql
 from werkzeug.security import generate_password_hash
-from automation import PROVISION_STATUS
+
 
 employees_bp = Blueprint("employees_api", __name__)
 

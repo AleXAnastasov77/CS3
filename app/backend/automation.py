@@ -214,6 +214,5 @@ def deprovision_employee(emp):
             print("WARNING: delete_vsphere_vm failed:", e)
 
     # Drop any in-memory status
-    PROVISION_STATUS.pop(ad_username, None)
 
     return True
