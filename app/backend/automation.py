@@ -154,7 +154,7 @@ def provision_employee(emp, ad_password):
     # 2) Clone VM from template (sync)
     #    create_vsphere_vm returns the VM IP now
     # -------------------------
-    vm_name = f"vm-{ad_username}"
+    vm_name = f"vm-{first}{last}"
     _set_status(ad_username, "cloning_vm")
     vm_ip = create_vsphere_vm(vm_name)
     print(f"[INFO] VM '{vm_name}' IP acquired: {vm_ip}")

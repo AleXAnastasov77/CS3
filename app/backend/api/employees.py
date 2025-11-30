@@ -186,6 +186,7 @@ def deactivate_employee(emp_id):
     return jsonify({"message": "Employee deactivated"})
 
 @employees_bp.route("/provision/status/<username>")
+@jwt_required
 def get_status(username):
     
     return {"status": PROVISION_STATUS.get(username, "unknown")}
