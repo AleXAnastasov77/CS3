@@ -159,7 +159,7 @@ def delete_vsphere_vm(vm_name):
     content = si.RetrieveContent()
 
     print(f"[vSphere] Searching for VM '{vm_name}'...")
-    vm = content.searchIndex.FindByInventoryPath(Config.VCENTER_VM_FOLDER_PATH)
+    vm = content.searchIndex.FindByInventoryPath(f"{Config.VCENTER_VM_FOLDER_PATH}/{vm_name}")
 
 
     if not vm:
