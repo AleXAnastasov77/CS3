@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: hr-frontend
-          image: YOUR_DOCKERHUB_USER/hr-frontend:v1
+          image: aleks13361/hr-frontend:v1
           imagePullPolicy: Always
           ports:
             - containerPort: 80
