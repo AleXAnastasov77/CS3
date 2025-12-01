@@ -159,7 +159,8 @@ def delete_vsphere_vm(vm_name):
     content = si.RetrieveContent()
 
     print(f"[vSphere] Searching for VM '{vm_name}'...")
-    vm = content.searchIndex.FindByDnsName(None, vm_name, True)
+    vm = content.searchIndex.FindByInventoryPath(Config.VCENTER_VM_FOLDER_PATH)
+
 
     if not vm:
         print(f"[vSphere] VM '{vm_name}' not found, skipping deletion.")
@@ -193,7 +194,7 @@ def get_vm_ip(vm_name):
     si = _connect_vsphere()
     content = si.RetrieveContent()
 
-    vm = content.searchIndex.FindByDnsName(None, vm_name, True)
+    vm = content.searchIndex.FindByInventoryPath(Config.VCENTER_VM_FOLDER_PATH)
     if not vm:
         raise Exception(f"VM '{vm_name}' not found")
 
