@@ -1,0 +1,12 @@
+FROM python:3.14
+
+WORKDIR /backend
+
+COPY . .
+#COPY .env .env
+
+RUN pip install --no-cache-dir --upgrade -r requirements.txt
+
+EXPOSE 5001
+
+CMD ["gunicorn", "-k", "eventlet", "-w", "1", "-b", "0.0.0.0:5001", "--access-logfile", "-", "--error-logfile", "-", "app:create_app()"]
