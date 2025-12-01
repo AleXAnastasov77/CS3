@@ -18,7 +18,7 @@ spec:
           image: aleks13361/hr-frontend:v1
           imagePullPolicy: Always
           ports:
-            - containerPort: 80
+            - containerPort: 5000
           envFrom:
             - secretRef:
                 name: frontend-secrets
