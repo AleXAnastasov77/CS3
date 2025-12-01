@@ -158,10 +158,54 @@ def delete_vsphere_vm(vm_name):
     si = _connect_vsphere()
     content = si.RetrieveContent()
 
+    print(f"[vSphere] Searching for VM '{vm_name}'...")
     vm = content.searchIndex.FindByDnsName(None, vm_name, True)
-    if vm:
-        task = vm.Destroy_Task()
+
+    if not vm:
+        print(f"[vSphere] VM '{vm_name}' not found, skipping deletion.")
+        Disconnect(si)
+        return
+
+    # --- 1) Power off the VM if needed ---
+    try:
+        if vm.runtime.powerState == "poweredOn":
+            print(f"[vSphere] VM '{vm_name}' is powered ON → powering off...")
+            power_off_task = vm.PowerOffVM_Task()
+            wait_for_task(power_off_task)
+            print(f"[vSphere] VM '{vm_name}' is now powered OFF.")
+        else:
+            print(f"[vSphere] VM '{vm_name}' is already powered OFF.")
+    except Exception as e:
+        print(f"[vSphere] WARNING: failed to power off VM '{vm_name}': {e}")
+
+    # --- 2) Destroy the VM ---
+    try:
         print(f"[vSphere] Deleting VM '{vm_name}'...")
-        wait_for_task(task)
+        destroy_task = vm.Destroy_Task()
+        wait_for_task(destroy_task)
+        print(f"[vSphere] VM '{vm_name}' deleted successfully.")
+    except Exception as e:
+        print(f"[vSphere] ERROR deleting VM '{vm_name}': {e}")
 
     Disconnect(si)
+
+def get_vm_ip(vm_name):
+    si = _connect_vsphere()
+    content = si.RetrieveContent()
+
+    vm = content.searchIndex.FindByDnsName(None, vm_name, True)
+    if not vm:
+        raise Exception(f"VM '{vm_name}' not found")
+
+    # Try guest tools first
+    if vm.guest is not None and vm.guest.net:
+        for nic in vm.guest.net:
+            if nic.ipAddress:
+                # return first non-IPv6 IP
+                for ip in nic.ipAddress:
+                    if "." in ip:
+                        Disconnect(si)
+                        return ip
+
+    Disconnect(si)
+    raise Exception(f"No valid IPv4 found for VM '{vm_name}' (Guest Tools?)")
