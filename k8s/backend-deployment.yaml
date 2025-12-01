@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hr-backend
+  namespace: hr-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: hr-backend
+  template:
+    metadata:
+      labels:
+        app: hr-backend
+    spec:
+      containers:
+        - name: hr-backend
+          image: aleks13361/hr-backend:v1
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5001
+          envFrom:
+            - secretRef:
+                name: backend_secrets
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hr-backend
+  namespace: hr-app
+spec:
+  selector:
+    app: hr-backend
+  ports:
+    - port: 5001
+      targetPort: 5001
+  type: ClusterIP
