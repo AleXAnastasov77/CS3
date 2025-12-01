@@ -19,3 +19,4 @@ pywinrm==0.4.3
 requests==2.31.0
 xmltodict==0.13.0
 gunicorn
+eventlet
