@@ -21,7 +21,7 @@ spec:
             - containerPort: 5001
           envFrom:
             - secretRef:
-                name: backend_secrets
+                name: backend-secrets
 ---
 apiVersion: v1
 kind: Service
