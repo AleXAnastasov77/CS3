@@ -137,13 +137,13 @@ def provision_employee(emp, ad_password):
     email = emp["email"]
 
     # Determine department OUs
-    dept_key = _get_department_key(emp)
+    dept = _get_department_key(emp)
 
-    user_ou = Config.AD_USER_OU.get(dept_key)
+    user_ou = Config.AD_USER_OU.get(dept)
     if not user_ou:
         user_ou = next(iter(Config.AD_USER_OU.values()))
 
-    computer_ou = Config.AD_COMPUTER_OU.get(dept_key)
+    computer_ou = Config.AD_COMPUTER_OU.get(dept)
     if not computer_ou:
         computer_ou = next(iter(Config.AD_COMPUTER_OU.values()))
 
@@ -158,6 +158,7 @@ def provision_employee(emp, ad_password):
         email=email,
         password=ad_password,
         ou_dn=user_ou,
+        department=dept
     )
 
     # -------------------------

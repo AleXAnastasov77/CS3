@@ -32,9 +32,10 @@ def _winrm_session():
 # MAIN FUNCTIONS
 # --------------------------
 
-def create_ad_user(ad_username, first_name, last_name, email, password, ou_dn):
+def create_ad_user(ad_username, first_name, last_name, email, password, ou_dn, department):
     """
-    Create a new AD user (LDAP), then set password & enable account using WinRM.
+    Create a new AD user (LDAP), then set password, enable the account,
+    and add the user to the department's security group.
     """
 
     # -----------------------
@@ -71,6 +72,9 @@ def create_ad_user(ad_username, first_name, last_name, email, password, ou_dn):
 
     conn.unbind()
 
+    # -----------------------
+    # 2. SET PASSWORD + ENABLE ACCOUNT (WinRM)
+    # -----------------------
     ps_script = f'''
     try {{
         Import-Module ActiveDirectory
@@ -91,23 +95,57 @@ def create_ad_user(ad_username, first_name, last_name, email, password, ou_dn):
     stdout = result.std_out.decode().strip()
     stderr = result.std_err.decode().strip()
 
-    # Ignore harmless CLIXML progress spam
     if stderr.startswith("#< CLIXML"):
         stderr = ""
 
-    # If PowerShell returned a structured error:
     if "ERROR:" in stdout:
         raise Exception(f"Failed to set AD password: {stdout}")
 
-    # If stderr still contains unexpected errors:
     if stderr and "CLIXML" not in stderr:
         raise Exception(f"Unexpected WinRM error: {stderr}")
 
-    # Only return success if PowerShell explicitly printed SUCCESS
     if "SUCCESS" not in stdout:
         raise Exception(f"Unexpected PowerShell output: {stdout}")
 
+    # -----------------------
+    # 3. ADD USER TO SECURITY GROUP (based on department)
+    # -----------------------
+    group_name = Config.AD_SECURITY_GROUPS.get(department)
+
+    if not group_name:
+        raise Exception(f"No AD security group mapped for department '{department}'")
+
+    ps_group_script = f'''
+    try {{
+        Import-Module ActiveDirectory
+
+        Add-ADGroupMember -Identity "{group_name}" -Members "{ad_username}"
+
+        Write-Output "SUCCESS"
+    }}
+    catch {{
+        Write-Output "ERROR: $($_.Exception.Message)"
+    }}
+    '''
+
+    result2 = session.run_ps(ps_group_script)
+    stdout2 = result2.std_out.decode().strip()
+    stderr2 = result2.std_err.decode().strip()
+
+    if stderr2.startswith("#< CLIXML"):
+        stderr2 = ""
+
+    if "ERROR:" in stdout2:
+        raise Exception(f"Failed to add user to group: {stdout2}")
+
+    if stderr2 and "CLIXML" not in stderr2:
+        raise Exception(f"Unexpected WinRM error (group add): {stderr2}")
+
+    if "SUCCESS" not in stdout2:
+        raise Exception(f"Unexpected PowerShell output (group add): {stdout2}")
+
     return True
+
 
 
 def disable_ad_user(ad_username):

@@ -50,3 +50,9 @@ class Config:
         "Finance":   "OU=Finance,OU=Computers,OU=Netherlands,DC=innovatech,DC=internal",
         "Marketing": "OU=Marketing,OU=Computers,OU=Netherlands,DC=innovatech,DC=internal",
     }
+    AD_SECURITY_GROUPS = {
+        "HR":"GRP-USER-HR",
+        "IT":"GRP-USER-IT",
+        "Finance":"GRP-USER-FINANCE",
+        "Marketing":"GRP-USER-MARKETING"
+    }
